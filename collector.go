@@ -109,11 +109,11 @@ func (c *collector) ExportToCSV() error {
 	actionDiff := c.ActionDiffData()
 	prevActionDiff := c.PrevActionDiffData()
 
-	file := filepath.Join(path, c.name+"_action_diff")
+	file := filepath.Join(path, "action_diff")
 	if err := c.exportCSV(file, actionDiff); err != nil {
 		return err
 	}
-	file = filepath.Join(path, c.name+"_prev_action_diff")
+	file = filepath.Join(path, "prev_action_diff")
 	if err := c.exportCSV(file, prevActionDiff); err != nil {
 		return err
 	}

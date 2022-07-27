@@ -40,7 +40,7 @@ type pool struct {
 	size int64
 }
 
-func NewPool(size int64) pool {
+func newPool(size int64) pool {
 	return pool{
 		size: size,
 		wg:   new(sync.WaitGroup),
@@ -63,7 +63,7 @@ func (g *pool) Write() <-chan packet {
 	return ch
 }
 
-func (g *pool) Read(key string, rch <-chan packet, collect func(b Bucket)) {
+func (g *pool) read(key string, rch <-chan packet, collect func(b Bucket)) {
 	// register read goroutine to save diff results
 	bk := newBucket(key, g.size)
 
@@ -80,7 +80,7 @@ func (g *pool) Read(key string, rch <-chan packet, collect func(b Bucket)) {
 	}()
 }
 
-func (g *pool) ReadAndWrite(key string, rch <-chan packet, collect func(b Bucket)) <-chan packet {
+func (g *pool) readAndWrite(key string, rch <-chan packet, collect func(b Bucket)) <-chan packet {
 	// register read goroutine to save diff results
 
 	wch := newPacketCh()

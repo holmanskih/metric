@@ -36,11 +36,11 @@ func Test_Mem_Latency_Read_Double_Write(t *testing.T) {
 }
 
 func testMemReadWrite(t *testing.T, n int64, rName1 string) {
-	p := NewPool(n)
-	m := newCollector(n)
+	p := newPool(n)
+	m := newCollector(n, rName1)
 
 	rch := p.Write()
-	p.Read(rName1, rch, func(b Bucket) { m.Collect(b) })
+	p.read(rName1, rch, func(b Bucket) { m.Collect(b) })
 	p.Wait()
 
 	data := m.ActionDiffData()
@@ -58,17 +58,17 @@ func testMemReadWrite(t *testing.T, n int64, rName1 string) {
 	avg /= int64(len(data))
 	log.Printf("avg latency: %d", avg)
 
-	err := m.ExportToCSV(rName1)
+	err := m.ExportToCSV()
 	assert.NoError(t, err)
 }
 
 func testMemReadDoubleWrite(t *testing.T, n int64, rName1, rName2 string) {
-	p := NewPool(n)
-	m := newCollector(n)
+	p := newPool(n)
+	m := newCollector(n, rName1+"+"+rName2)
 
 	rch := p.Write()
-	wch := p.ReadAndWrite(rName1, rch, func(b Bucket) { m.Collect(b) })
-	p.Read(rName2, wch, func(b Bucket) { m.Collect(b) })
+	wch := p.readAndWrite(rName1, rch, func(b Bucket) { m.Collect(b) })
+	p.read(rName2, wch, func(b Bucket) { m.Collect(b) })
 	p.Wait()
 
 	data := m.ActionDiffData()
@@ -86,6 +86,6 @@ func testMemReadDoubleWrite(t *testing.T, n int64, rName1, rName2 string) {
 	avg /= int64(len(data))
 	log.Printf("avg latency: %d", avg)
 
-	err := m.ExportToCSV(rName1 + "+" + rName2)
+	err := m.ExportToCSV()
 	assert.NoError(t, err)
 }

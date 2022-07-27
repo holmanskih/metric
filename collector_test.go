@@ -1,4 +1,4 @@
-package main
+package metric
 
 import (
 	"log"
@@ -37,7 +37,7 @@ func Test_Mem_Latency_Read_Double_Write(t *testing.T) {
 
 func testMemReadWrite(t *testing.T, n int64, rName1 string) {
 	p := NewPool(n)
-	m := New(n)
+	m := newCollector(n)
 
 	rch := p.Write()
 	p.Read(rName1, rch, func(b Bucket) { m.Collect(b) })
@@ -64,7 +64,7 @@ func testMemReadWrite(t *testing.T, n int64, rName1 string) {
 
 func testMemReadDoubleWrite(t *testing.T, n int64, rName1, rName2 string) {
 	p := NewPool(n)
-	m := New(n)
+	m := newCollector(n)
 
 	rch := p.Write()
 	wch := p.ReadAndWrite(rName1, rch, func(b Bucket) { m.Collect(b) })

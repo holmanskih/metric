@@ -1,4 +1,4 @@
-package main
+package metric
 
 import (
 	"sync"
@@ -71,7 +71,7 @@ func (g *pool) Read(key string, rch <-chan packet, collect func(b Bucket)) {
 	go func() {
 		for chPacket := range rch {
 			//diff := chPacket.diff()
-			bk.Add(chPacket.id)
+			bk.Collect(chPacket.id)
 			//metrics = append(metrics, diff)
 		}
 
@@ -90,7 +90,7 @@ func (g *pool) ReadAndWrite(key string, rch <-chan packet, collect func(b Bucket
 	go func() {
 		for chPacket := range rch {
 			rwPacket := newPacket(chPacket.id, chPacket.currNs)
-			bk.Add(chPacket.id)
+			bk.Collect(chPacket.id)
 			//metrics = append(metrics, rwPacket.diffNs)
 
 			wch <- rwPacket

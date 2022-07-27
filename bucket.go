@@ -1,43 +1,46 @@
-package main
+package metric
 
 import (
-	"log"
 	"time"
 )
 
 type Bucket interface {
+	// Name returns unique identifier bucket name
 	Name() string
-	Add(id int64)
+
+	// Collect collects timestamp data and assign it to id
+	Collect(id int64)
+
+	// Metric returns all bucket`s metric data in form of timestamps
 	Metric() []int64
 }
 
 type bucket struct {
-	key    string
+	name   string
 	size   int64
 	metric []int64
 }
 
 func (b *bucket) Name() string {
-	return b.key
+	return b.name
 }
 
 func (b *bucket) Metric() []int64 {
 	return b.metric
 }
 
-func (b *bucket) Add(id int64) {
+func (b *bucket) Collect(id int64) {
 	if id >= b.size {
 		return
 	}
 
 	ts := time.Now().UnixNano()
-	log.Printf("bucket: %s id: %d ts: %d", b.key, id, ts)
 	b.metric[id] = ts
 }
 
 func newBucket(key string, size int64) Bucket {
 	return &bucket{
-		key:    key,
+		name:   key,
 		size:   size,
 		metric: make([]int64, size),
 	}

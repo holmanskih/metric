@@ -1,21 +1,34 @@
-package main
+package metric
 
 import (
 	"encoding/csv"
-	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
+	"time"
 )
 
 type Collector interface {
+	// Size is max size of metric data to be collected
 	Size() int64
-	Collect(b Bucket)
-	ActionDiffData() [][]int64 // returns metric data with id and ts diff in nanoseconds
+
+	// Collect add buckets metric data to collector
+	Collect(b ...Bucket)
+
+	// ActionDiffData returns metric data with id and ts diff in nanoseconds
+	ActionDiffData() [][]int64
 	PrevActionDiffData() [][]int64
-	ExportToCSV(name string) error
+
+	// ExportToCSV exports collected bucket data to separate folder with .csv files
+	ExportToCSV() error
 }
 
+const (
+	exportBasePath = "_metric"
+)
+
 type collector struct {
+	name    string   // collector name, uses during metric exporting
 	size    int64    // bucket size
 	buckets []Bucket // metric buckets
 }
@@ -24,8 +37,8 @@ func (c *collector) Size() int64 {
 	return c.size
 }
 
-func (c *collector) Collect(b Bucket) {
-	c.buckets = append(c.buckets, b)
+func (c *collector) Collect(b ...Bucket) {
+	c.buckets = append(c.buckets, b...)
 }
 
 func (c *collector) PrevActionDiffData() [][]int64 {
@@ -78,29 +91,44 @@ func (c *collector) ActionDiffData() [][]int64 {
 	return data
 }
 
-func (c *collector) ExportToCSV(name string) error {
-	actionDiff := c.ActionDiffData()
-	if err := c.exportCSV(name+"_actionDiff", actionDiff); err != nil {
+func (c *collector) ExportToCSV() error {
+	ts := strconv.FormatInt(time.Now().Unix(), 10)
+
+	if _, err := os.Stat(exportBasePath); os.IsNotExist(err) {
+		if err = os.Mkdir(exportBasePath, 0755); err != nil {
+			return err
+		}
+	}
+
+	path := c.name + "_" + ts
+	path = filepath.Join(exportBasePath, path)
+	if err := os.Mkdir(path, 0755); err != nil {
 		return err
 	}
 
-	prevaActionDiff := c.PrevActionDiffData()
-	if err := c.exportCSV(name+"_prevActionDiff", prevaActionDiff); err != nil {
+	actionDiff := c.ActionDiffData()
+	prevActionDiff := c.PrevActionDiffData()
+
+	file := filepath.Join(path, c.name+"_action_diff")
+	if err := c.exportCSV(file, actionDiff); err != nil {
 		return err
 	}
+	file = filepath.Join(path, c.name+"_prev_action_diff")
+	if err := c.exportCSV(file, prevActionDiff); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (c *collector) exportCSV(name string, metric [][]int64) error {
-	path := fmt.Sprintf("%s.csv", name)
-
 	cols := len(c.buckets)
 	headers := make([]string, 0, cols)
 	for _, b := range c.buckets {
 		headers = append(headers, b.Name())
 	}
 
-	if err := newCsv(path, headers, metric, cols); err != nil {
+	if err := newCsv(name+".csv", headers, metric, cols); err != nil {
 		return err
 	}
 
@@ -151,9 +179,10 @@ func newCsv(path string, headers []string, metric [][]int64, n int) error {
 	return nil
 }
 
-func New(size int64) Collector {
+func newCollector(size int64, name string) Collector {
 	return &collector{
 		size:    size,
+		name:    name,
 		buckets: make([]Bucket, 0),
 	}
 }

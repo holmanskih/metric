@@ -23,7 +23,6 @@ func init() {
 }
 
 func main() {
-	i := int64(0)
 	wg := sync.WaitGroup{}
 	idCh := make(chan int64)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
@@ -39,9 +38,9 @@ func main() {
 				return
 
 			default:
-				in.Collect(i)
-				idCh <- i
-				i++
+				id := col.ID()
+				in.Collect(id)
+				idCh <- id
 			}
 		}
 	}()

@@ -9,6 +9,9 @@ import (
 )
 
 type Collector interface {
+	// ID returns current id and increment it. ID is used in leading bucket that collects data
+	ID() int64
+
 	// NewBucket creates new metric bucket. Should be created separately for working inside goroutines
 	NewBucket(name string) Bucket
 
@@ -31,9 +34,16 @@ const (
 )
 
 type collector struct {
+	id      int64
 	name    string   // collector name, uses during metric exporting
 	size    int64    // bucket size
 	buckets []Bucket // metric buckets
+}
+
+func (c *collector) ID() int64 {
+	curr := c.id
+	c.id++
+	return curr
 }
 
 func (c *collector) NewBucket(name string) Bucket {
@@ -188,6 +198,7 @@ func Init(size int64, name string) Collector {
 	return &collector{
 		size:    size,
 		name:    name,
+		id:      0,
 		buckets: make([]Bucket, 0),
 	}
 }

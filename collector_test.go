@@ -37,7 +37,7 @@ func Test_Mem_Latency_Read_Double_Write(t *testing.T) {
 
 func testMemReadWrite(t *testing.T, n int64, rName1 string) {
 	p := newPool(n)
-	m := newCollector(n, rName1)
+	m := Init(n, rName1)
 
 	rch := p.Write()
 	p.read(rName1, rch, func(b Bucket) { m.Collect(b) })
@@ -64,7 +64,7 @@ func testMemReadWrite(t *testing.T, n int64, rName1 string) {
 
 func testMemReadDoubleWrite(t *testing.T, n int64, rName1, rName2 string) {
 	p := newPool(n)
-	m := newCollector(n, rName1+"+"+rName2)
+	m := Init(n, rName1+"+"+rName2)
 
 	rch := p.Write()
 	wch := p.readAndWrite(rName1, rch, func(b Bucket) { m.Collect(b) })

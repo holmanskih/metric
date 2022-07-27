@@ -17,8 +17,9 @@ var (
 func init() {
 	//  init metric collector first to get size value first that is used in bucket initialization
 	col = metric.Init(50, "example")
-	in = metric.NewBucket("in")
-	out = metric.NewBucket("out")
+
+	in = col.NewBucket("in")
+	out = col.NewBucket("out")
 }
 
 func main() {

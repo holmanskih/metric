@@ -9,6 +9,9 @@ import (
 )
 
 type Collector interface {
+	// NewBucket creates new metric bucket. Should be created separately for working inside goroutines
+	NewBucket(name string) Bucket
+
 	// Size is max size of metric data to be collected
 	Size() int64
 
@@ -31,6 +34,10 @@ type collector struct {
 	name    string   // collector name, uses during metric exporting
 	size    int64    // bucket size
 	buckets []Bucket // metric buckets
+}
+
+func (c *collector) NewBucket(name string) Bucket {
+	return newBucket(name, c.size)
 }
 
 func (c *collector) Size() int64 {
@@ -160,18 +167,16 @@ func newCsv(path string, headers []string, metric [][]int64, n int) error {
 
 	// data
 	for id, metricData := range metric {
-		csvData := make([]string, len(metricData)+1)
-		csvData[0] = strconv.FormatInt(int64(id), 10)
+		rowData := make([]string, len(metricData)+1)
+		rowData[0] = strconv.FormatInt(int64(id), 10)
 
 		var sum int64
 		for i, data := range metricData {
-			csvData[i+1] = strconv.FormatInt(data, 10)
+			rowData[i+1] = strconv.FormatInt(data, 10)
 			sum += data
 		}
 
-		//log.Printf("avg case: %s value: %d", id, sum/int64(len(metricData)))
-
-		if err = writer.Write(csvData); err != nil {
+		if err = writer.Write(rowData); err != nil {
 			return err
 		}
 	}
@@ -179,7 +184,7 @@ func newCsv(path string, headers []string, metric [][]int64, n int) error {
 	return nil
 }
 
-func newCollector(size int64, name string) Collector {
+func Init(size int64, name string) Collector {
 	return &collector{
 		size:    size,
 		name:    name,
